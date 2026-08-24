@@ -18,7 +18,7 @@ from sqlalchemy.orm import Session
 
 from alembic import command
 from app.config import settings
-from app.db import get_db
+from app.db import get_audit_db, get_db
 from app.main import app as fastapi_app
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
@@ -104,8 +104,13 @@ def db_session(engine):
 @pytest.fixture
 def client(db_session):
     fastapi_app.dependency_overrides[get_db] = lambda: db_session
+    # Audit uses an independent session in production (Decisão 6); in tests
+    # both dependencies share the one rolled-back session so audit rows are
+    # visible to db_session assertions and isolated between tests.
+    fastapi_app.dependency_overrides[get_audit_db] = lambda: db_session
     try:
         with TestClient(fastapi_app) as test_client:
             yield test_client
     finally:
         fastapi_app.dependency_overrides.pop(get_db, None)
+        fastapi_app.dependency_overrides.pop(get_audit_db, None)
