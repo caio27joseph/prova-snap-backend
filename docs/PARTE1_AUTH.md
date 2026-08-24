@@ -85,24 +85,117 @@ não escala como padrão de projeto.
 
 ## 1.2 Modelo de Permissionamento
 
-<!-- TODO: desenvolver — armazenamento (client roles no Keycloak), validação na
-API (dependency FastAPI extrai e normaliza permissões), JWT enxuto
-(resource_access só com clients relevantes), auditoria por aplicação
-(tabela search_audit_log + eventos do Keycloak). Referenciar docs/JWT_STRUCTURE.md.
+Exemplo do enunciado — João Silva:
 
-PEGADINHA DO EXEMPLO: "viewer → vê relatórios ASSOCIADOS AO JOÃO" implica
-autorização em nível de RECURSO (ownership), que client roles sozinhos não
-resolvem. Tratar aqui como conceito (atributo de dono + filtro na query, ou
-Keycloak Authorization Services), notando que: (a) a tabela analytics_reports
-da Parte 2 não tem coluna de dono — o escopo por recurso NÃO entra no schema
-da Parte 2; (b) "modelo de permissões mais granular" é item da Parte 4. -->
+```
+João Silva (sub: 01a03323-…-84f42896edd4)
+├── Analytics:     role "viewer"              → vê relatórios associados a ele
+├── Investigator:  role "senior-investigator" → acesso total
+└── Case Manager:  SEM ACESSO
+```
+
+### Como armazenar as permissões?
+
+Como **client roles no Keycloak** — cada client define seu namespace de roles
+(`analytics-api`: `viewer`, `search`; `investigator-api`:
+`senior-investigator`, `search`; `case-manager-api`: `search`, `manager`), e a
+permissão é a **atribuição usuário × client role**. João tem roles nos dois
+primeiros clients e nenhuma no terceiro — "sem acesso" é a *ausência* de
+atribuição, não uma regra de negação. Para atribuição em massa, **grupos** com
+role mapping (ver Cenário 1). A nossa API **não armazena permissões**: elas
+viajam no token, e a fonte da verdade é o Keycloak.
+
+### Como a API valida se o usuário pode acessar um endpoint X?
+
+Uma dependency FastAPI executada antes de qualquer lógica de negócio:
+
+1. Extrai o Bearer token e valida **estritamente**: assinatura, expiração,
+   claims obrigatórios (`sub`, `azp`, `resource_access`), `azp` entre os
+   clients conhecidos. Qualquer falha → **401** (token não confiável).
+2. Normaliza `resource_access.<client>.roles` para permissões internas
+   `<app>:<role>` e produz um `AuthContext(user_id, origin_app, permissions)`.
+3. O endpoint declara o que exige. No `/search`: ter ao menos um
+   `<app>:search`; nenhum → **403**. O escopo da busca = apps com permissão.
+
+Regra de ouro da taxonomia (Decisão 9 do AI log): **401 se decide antes de
+olhar permissões; 403 depois** — e 401 nunca gera linha de auditoria
+(identidade não verificada), 403 gera. Detalhes em
+[`JWT_STRUCTURE.md`](JWT_STRUCTURE.md).
+
+### Como fazer o JWT carregar apenas permissões relevantes?
+
+Esse é o comportamento **default** do Keycloak: `resource_access` inclui
+somente os clients em que o usuário tem roles. O token do João carrega
+`analytics-api` e `investigator-api` — `case-manager-api` simplesmente não
+aparece. Para tokens ainda mais enxutos, **client scope mappings** restringem
+quais roles cada client pode receber no token que emite (ex.: o token emitido
+para o Analytics não precisa carregar roles do Investigator). No mock
+espelhamos o default, que já cumpre o requisito.
+
+### Como implementar auditoria de acessos por aplicação?
+
+Em duas camadas complementares:
+
+- **Keycloak (autenticação):** login events por client — "João autenticou via
+  `analytics-api` às 14h" — habilitados no realm, exportáveis via SPI.
+- **Aplicação (uso dos dados):** nossa `search_audit_log`, desenhada na
+  Decisão 6: **uma linha por app pesquisada** (`app` = domínio de dados
+  tocado, `origin_app` = azp de onde o usuário veio, `status`,
+  `results_count`). Responde tanto "que apps João acessou e quando" quanto a
+  pergunta forense mais forte: "quem viu dados de qual domínio".
+
+### A pegadinha do exemplo: "vê relatórios associados ao João"
+
+O role `viewer` responde **o que João pode fazer** (buscar/ver relatórios) —
+mas "*associados ao João*" é autorização em nível de **recurso** (ownership),
+que client roles sozinhos não expressam. A solução padrão: o recurso carrega
+um atributo de dono (`owner_id = sub`) e a query filtra por ele — exatamente o
+padrão que o Case Manager usa com `assigned_to` na Parte 2. A alternativa
+pesada seria Keycloak Authorization Services (UMA, políticas por recurso) —
+poder que este cenário não justifica. Honestidade de escopo: a tabela
+`analytics_reports` da Parte 2 **não tem coluna de dono**, então o filtro de
+ownership do Analytics fica como conceito aqui e não entra no schema; um
+"modelo de permissões mais granular" é candidato declarado da Parte 4.
 
 ## 1.3 Análise de Cenários
 
-<!-- TODO Cenário 1: conceder Analytics a 50 novos usuários sem afetar 300 do
-Investigator — grupo "analytics-viewers" com client role mapeado; atribuição em
-lote via Admin API; nenhuma mudança toca roles de outros clients. -->
+### Cenário 1 — 50 usuários novos no Analytics, 300 existentes no Investigator
 
-<!-- TODO Cenário 2: chamada API-to-API Investigator → Analytics — service
-account (client credentials grant) vs. repassar o JWT do usuário; discutir
-rastreabilidade do usuário final vs. limites de permissão do serviço. -->
+Com client roles, os namespaces são **isolados por construção**: nada que se
+faça em `analytics-api` toca roles de `investigator-api`. O procedimento:
+
+1. Criar (uma vez) o grupo `analytics-users` com role mapping para
+   `analytics-api: viewer, search`.
+2. Adicionar os 50 usuários ao grupo — em lote via Admin API
+   (`PUT /admin/realms/plataforma/users/{id}/groups/{groupId}`), num script
+   idempotente; usuários novos podem já nascer no grupo (default group ou
+   provisionamento SCIM/LDAP).
+3. Validar com um usuário-piloto antes do lote; admin events do Keycloak
+   registram cada atribuição (trilha do onboarding).
+
+Os 300 do Investigator não são tocados: nenhuma atribuição deles muda, nenhuma
+sessão é invalidada, e o token deles nem menciona `analytics-api`. O grupo
+ainda torna o futuro *offboarding* simétrico: remover do grupo revoga o
+Analytics inteiro sem efeito colateral.
+
+### Cenário 2 — Investigator chama endpoint do Analytics (API-to-API)
+
+**Decisão: service account (client credentials grant) com propagação da
+identidade do usuário final para auditoria.**
+
+O client `investigator-api` habilita seu service account e obtém, via client
+credentials, um token **próprio** com roles mínimos (`analytics-api: search` e
+nada mais). As alternativas e o porquê:
+
+| Abordagem | Prós | Contras |
+|---|---|---|
+| **Service account (escolhida)** | Permissões do serviço explícitas e mínimas; funciona sem sessão do usuário (jobs, filas); TTL curto e renovação automática | Perde a identidade do usuário final — precisa de propagação explícita |
+| Repassar o JWT do usuário | Identidade fim-a-fim de graça | Acopla a chamada à expiração da sessão do usuário; quebra em processamento assíncrono; o serviço herda permissões que não precisa (blast radius maior); o Analytics não distingue chamada direta de chamada intermediada |
+| Token exchange (RFC 8693) | Meio-termo maduro: troca o token do usuário por um de audiência restrita | Mais configuração no Keycloak; valor real só quando muitos serviços se chamam — over-engineering para 3 apps |
+
+A perda de identidade do service account é resolvida por **propagação
+explícita**: a chamada leva o `sub` do usuário original (header
+`X-On-Behalf-Of` ou claim custom), e a auditoria do Analytics grava **os
+dois** — `service_account_investigator` (quem chamou) e o usuário em nome de
+quem (accountability forense). Importante: o Analytics **autoriza pelo token
+do serviço**, nunca pelo header — o header é rastreabilidade, não credencial.
