@@ -9,7 +9,11 @@ from app.models import Base
 config = context.config
 
 if config.config_file_name is not None:
-    fileConfig(config.config_file_name)
+    # disable_existing_loggers=False: the test suite runs migrations IN-PROCESS
+    # (conftest.py), and fileConfig's default True would silently disable every
+    # already-imported app logger for the whole pytest session — found when a
+    # caplog assertion on the audit logger captured nothing (see AI log).
+    fileConfig(config.config_file_name, disable_existing_loggers=False)
 
 target_metadata = Base.metadata
 

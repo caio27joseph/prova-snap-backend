@@ -32,7 +32,20 @@ Mantido em tempo real durante o desenvolvimento (não reconstruído ao final).
   conflitos de merge** — a análise prévia de acoplamento (fundação primeiro,
   ownership de arquivos disjunto) foi o que tornou o paralelismo seguro.
 
-### Caso 3: <!-- preencher durante o desenvolvimento -->
+### Caso 3: Diagnóstico de bug latente de logging escondido pelo Alembic (2026-08-24)
+- **Problema:** no bloco T-06, o teste "falha de auditoria não derruba a
+  busca" precisava provar via `caplog` que o erro era logado — e o caplog
+  capturava **zero** registros mesmo com a falha disparando.
+- **Como a IA ajudou:** o agente rastreou a causa até um bug latente que
+  ninguém tinha visto: o `fileConfig()` do `alembic/env.py` usa por default
+  `disable_existing_loggers=True`, e como o conftest roda as migrações
+  **in-process**, ele silenciava todos os loggers da aplicação pela sessão
+  inteira de testes — qualquer asserção de logging futura falharia de forma
+  misteriosa.
+- **Resultado:** correção de uma linha (`disable_existing_loggers=False`, com
+  why-comment no `env.py`); o bug nunca teria aparecido em produção (Alembic
+  roda em processo separado), mas mascararia testes — a classe de bug mais
+  cara de encontrar depois.
 
 ## 3. Casos em que a IA estava errada (mínimo 1)
 
@@ -334,6 +347,24 @@ cada um com comentário no código e teste dedicado:
   se um domínio um dia precisar de deploy/escala independente — critério
   objetivo registrado em `docs/ESCALABILIDADE.md` (seção "Por que um serviço
   único").
+
+### Decisão 12: As 3 melhorias da Parte 4 — FTS → Paginação → Observabilidade (2026-08-24)
+- **Contexto:** decisão tomada deliberadamente DEPOIS da implementação, para
+  ser argumentada com dores reais do código entregue e não no vácuo.
+- **Alternativas consideradas:** trocar observabilidade por rate limiting
+  (proteção ativa contra o cenário da Parte 3); trio conservador
+  paginação + CI + mais testes.
+- **Decisão tomada:** 1º busca full-text/pg_trgm, 2º paginação por cursor,
+  3º OpenTelemetry.
+- **Por quê:** (1º) o ILIKE seq scan é o gargalo *conhecido e documentado*
+  desde a Decisão 4, e a análise do incidente da Parte 3 é o dado de
+  priorização; (2º) a paginação é o maior valor por hora do backlog — o
+  schema já está cursor-ready por design (Decisão 5), falta só o endpoint —
+  e vem depois do FTS porque paginar um scan lento continua escaneando;
+  (3º) a Parte 3 expôs que detectaríamos incidente pelo sintoma, não por
+  alerta. Rate limiting rejeitado nesta rodada: sem observabilidade é
+  proteção às cegas, e há mitigação temporária no proxy. Argumentação
+  completa em `docs/PARTE4_TRADEOFFS.md`.
 
 ## 5. Exemplos de interações com IA (opcional, até 3)
 ok then, lets then plan and create all dev requirements for this project, like the user should x, the industry standard requirements

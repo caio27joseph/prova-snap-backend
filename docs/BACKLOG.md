@@ -105,7 +105,7 @@ auditoria, response models.
 
 ---
 
-## T-06 · Parte 2: caminhos de erro — branch `parte2-error-paths`
+## T-06 · Parte 2: caminhos de erro — ✅ CONCLUÍDO (branch `parte2-error-paths`)
 
 **Objetivo:** fechar 100% da matriz do [TEST_STRATEGY](TEST_STRATEGY.md).
 
@@ -135,7 +135,7 @@ auditoria, response models.
 
 ---
 
-## T-08 · Parte 4: trade-offs — branch `parte4-tradeoffs`
+## T-08 · Parte 4: trade-offs — ✅ CONCLUÍDO (branch `parte4-tradeoffs`)
 
 **Objetivo:** `docs/PARTE4_TRADEOFFS.md` — 3 melhorias, ordem, critérios,
 riscos aceitos.
