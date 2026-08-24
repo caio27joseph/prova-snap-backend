@@ -1,0 +1,34 @@
+[project]
+name = "prova-snap-backend"
+version = "0.1.0"
+description = "Multi-application search API with SSO-style JWT auth — Snap Forensics technical test"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.30",
+    "sqlalchemy>=2.0",
+    "alembic>=1.13",
+    "psycopg[binary]>=3.2",
+    "pydantic-settings>=2.4",
+    # PyJWT over python-jose: actively maintained, no 2024 CVE history (AI log, Decisão 10)
+    "pyjwt>=2.9",
+    # uuid-utils: UUIDv7 generation; stdlib uuid7 only exists on Python 3.14+ and we target 3.12+
+    "uuid-utils>=0.9",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8",
+    "httpx>=0.27",
+    "ruff>=0.6",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
