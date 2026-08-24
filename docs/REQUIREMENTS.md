@@ -183,18 +183,18 @@ prova-snap-backend/
 
 ## Definition of Done checklist
 
-- [ ] Parte 1 answered (decision + trade-offs + SSO + permissions + 2 scenarios)
-- [ ] Models for the 4 tables
-- [ ] Alembic migration with indexes + seed (10×3 tables)
-- [ ] `/api/v1/search` with permission enforcement, per-app logic, aggregation, audit
-- [ ] JWT dependency extracting `user_id`, `app_client_id`, `permissions` (mocked Keycloak)
-- [ ] JWT structure documented
-- [ ] ≥5 pytest tests covering the 5 mandated cases — all green
-- [ ] Parte 3 incident write-up
-- [ ] Parte 4 trade-offs write-up
-- [ ] `AI_ENGINEERING_LOG.md` complete (tools, 3 wins, ≥1 AI failure, ≥2 decisions)
-- [ ] README a non-technical client can follow
-- [ ] Error handling beyond the happy path (invalid token, expired token, empty query, unknown app, DB down)
-- [ ] Non-obvious decisions commented in code
-- [ ] Private repo + collaborator `guilherme.rabelo@snapforensics.com` added
-- [ ] Email sent: "Prova Técnica – Caio Joseph A. Silveira"
+- [x] Parte 1 answered — `docs/PARTE1_AUTH.md` (1.1 decision+trade-offs+SSO, 1.2 four questions, 1.3 both scenarios)
+- [x] Models for the 4 tables — `app/models/` (audit extensions justified in Decisão 6)
+- [x] Alembic migration with indexes + seed (10×3) — `alembic/versions/e606788ed467_*.py`, counts test-guarded
+- [x] `/api/v1/search` with permission enforcement, per-app logic, aggregation, audit — `app/api/search.py` + `app/services/`
+- [x] JWT dependency extracting `user_id`, `app_client_id`, `permissions` — `app/auth/deps.py` (mocked Keycloak, PyJWT)
+- [x] JWT structure documented — `docs/JWT_STRUCTURE.md`
+- [x] ≥5 pytest tests covering the 5 mandated cases — `tests/test_search.py::test_mandated_1..5`; full suite 71 green (`make check`)
+- [x] Parte 3 incident write-up — `docs/PARTE3_INCIDENT.md` (all 7 points)
+- [x] Parte 4 trade-offs write-up — `docs/PARTE4_TRADEOFFS.md` (all 4 answers)
+- [x] `AI_ENGINEERING_LOG.md` complete — tools, 3 help cases, 3 AI-wrong cases, 12 decisions, 3 curated interactions
+- [x] README a non-technical client can follow — run path verified by execution (independent audit)
+- [x] Error handling beyond the happy path — 401 taxonomy, 403, 422 bounds, 503 DB-down, audit-failure resilience (`tests/test_error_paths.py`)
+- [x] Non-obvious decisions commented in code — verified across `app/` (independent audit)
+- [ ] Private repo + collaborator `guilherme.rabelo@snapforensics.com` added — **in progress (Caio)**
+- [ ] Email sent: "Prova Técnica – Caio Joseph A. Silveira" — **pending (Caio)**
