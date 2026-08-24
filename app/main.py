@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 
-from app.api import health
+from app.api import health, search
 
 app = FastAPI(
     title="Snap Forensics — Multi-Application Search API",
@@ -8,4 +8,4 @@ app = FastAPI(
 )
 
 app.include_router(health.router)
-# /api/v1/search router lands in the parte2-search branch.
+app.include_router(search.router)

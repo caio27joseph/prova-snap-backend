@@ -16,3 +16,11 @@ SessionLocal = sessionmaker(bind=engine, autoflush=False)
 def get_db() -> Generator[Session, None, None]:
     with SessionLocal() as session:
         yield session
+
+
+def get_audit_db() -> Generator[Session, None, None]:
+    """Second, independent session (same SessionLocal) for audit writes
+    (Decisão 6): the audit commit must not depend on, or interfere with, the
+    search session's transaction — an audit failure rolls back alone."""
+    with SessionLocal() as session:
+        yield session
