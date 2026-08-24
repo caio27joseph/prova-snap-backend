@@ -225,6 +225,41 @@ cada um com comentário no código e teste dedicado:
   conteúdo" vive no strategy). Teste de vazamento (asserção negativa): a
   seção analytics da resposta não contém chaves de conteúdo de report.
 
+### Decisão 8: SQLAlchemy síncrono — decisão enviesada pela documentação do FastAPI (2026-08-24)
+- **Alternativas consideradas:** (a) engine síncrona (psycopg3) com endpoints
+  `def`; (b) AsyncSession + asyncpg com `async def` em tudo (permitiria rodar
+  as 3 strategies com `asyncio.gather`); (c) híbrido.
+- **Decisão tomada:** (a) síncrono — e registro explicitamente o viés: a
+  decisão segue a orientação da própria documentação do FastAPI
+  (fastapi.tiangolo.com/async): *"If you just don't know, use normal `def`"*;
+  endpoints `def` rodam em threadpool externo ("run in an external threadpool
+  that is then awaited... as it would block the server") e *"in any of the
+  cases above, FastAPI will still work asynchronously and be extremely fast"*.
+- **Por quê:** menos partes móveis exatamente onde a prova pontua — fixtures
+  de teste triviais (sem pytest-asyncio/greenlet), sem armadilhas de lazy-load
+  em contexto async, ~1h a menos do orçamento de 6-8h. O ganho real do async
+  (fan-out concorrente das 3 buscas) é irrelevante com LIMIT fixo e volume de
+  prova; fica anotado para a Parte 4 como melhoria com custo/benefício.
+
+### Decisão 9: Taxonomia de auth, formato de identidade e agregado do Analytics (2026-08-24)
+- **401 vs 403 (e azp desconhecido → 401):** 401 = token não confiável (sem
+  header, malformado, assinatura inválida, expirado, claims obrigatórios
+  ausentes, **azp fora dos 3 clients conhecidos**); 403 = token confiável sem
+  nenhuma permissão `<app>:search`. Espelha o Keycloak real (client
+  desconhecido falharia na validação de audience). Regra única: 401 se decide
+  antes de olhar permissões, 403 depois — e mantém limpa a regra de auditoria
+  da Decisão 6 (403 audita no DB; 401 nunca).
+- **Identidade = UUID do claim `sub`:** `assigned_to` e `user_id` da
+  auditoria armazenam o `sub` do Keycloak. Alternativa rejeitada: username
+  (`preferred_username` é mutável — rename quebraria atribuições e trilha).
+  Seed usa UUIDs fixos de usuários de teste documentados, reutilizados pelo
+  helper de tokens mock — o teste do Case Manager fecha por construção.
+- **Agregado do Analytics = total + distribuição por mês:** `total_matched` +
+  `by_month` (COUNT + GROUP BY date_trunc de `created_at`). Zero conteúdo
+  exponível — nem títulos, que em contexto forense já são detalhe sensível
+  ("Investigação Empresa X"). Interpretação deliberada de um requisito que o
+  enunciado deixa aberto ("dados agregados, sem detalhe sensível").
+
 ## 5. Exemplos de interações com IA (opcional, até 3)
 
 <!-- colar trechos de prompts/respostas relevantes -->
