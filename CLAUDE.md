@@ -58,6 +58,9 @@ prioritized improvement instead.
   reported, not raised to the user) — but tests must prove the audit row is written
   on success.
 - Keep commits small and descriptive; the repo history is part of the evaluation story.
+- **Never commit, merge, or push without asking Caio first.** When a block of work
+  is ready, propose the commit (files + message) and wait for explicit approval in
+  that conversation turn. A past "let's commit" does not authorize future commits.
 
 ## Language
 
