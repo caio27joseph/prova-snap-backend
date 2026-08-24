@@ -30,8 +30,16 @@ def run_search(
 
     results = {}
     results_per_app: list[tuple[str, int]] = []
+    # A cursor for an app outside the user's permitted scope is silently
+    # unused, not an error: permissions decide WHICH apps are searched,
+    # cursors only position WITHIN that scope. Rejecting stray cursors would
+    # turn cursor validation into a permission probe (a 403-ish signal
+    # revealing what exists for other users).
+    cursors = request.cursors or {}
     for app_name in context.search_apps:
-        section, count = _STRATEGIES[app_name].search(db, request.query, context.user_id)
+        section, count = _STRATEGIES[app_name].search(
+            db, request.query, context.user_id, cursors.get(app_name), request.limit
+        )
         results[app_name] = section
         results_per_app.append((app_name, count))
 
