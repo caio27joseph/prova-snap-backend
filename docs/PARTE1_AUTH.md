@@ -5,6 +5,10 @@
 **Decisão: Opção A** — um único realm `plataforma` no Keycloak, com três clients:
 `analytics-api`, `investigator-api` e `case-manager-api`.
 
+> Nota de grafia: o enunciado grafa o realm como `"platforma"`; adotamos a
+> grafia `plataforma` assumindo typo no PDF, mantendo os nomes dos clients
+> exatamente como especificados.
+
 ### Viés da decisão (o que estamos otimizando)
 
 Toda decisão de arquitetura carrega um viés. O nosso, explicitado:
@@ -84,7 +88,14 @@ não escala como padrão de projeto.
 <!-- TODO: desenvolver — armazenamento (client roles no Keycloak), validação na
 API (dependency FastAPI extrai e normaliza permissões), JWT enxuto
 (resource_access só com clients relevantes), auditoria por aplicação
-(tabela search_audit_log + eventos do Keycloak). Referenciar docs/JWT_STRUCTURE.md. -->
+(tabela search_audit_log + eventos do Keycloak). Referenciar docs/JWT_STRUCTURE.md.
+
+PEGADINHA DO EXEMPLO: "viewer → vê relatórios ASSOCIADOS AO JOÃO" implica
+autorização em nível de RECURSO (ownership), que client roles sozinhos não
+resolvem. Tratar aqui como conceito (atributo de dono + filtro na query, ou
+Keycloak Authorization Services), notando que: (a) a tabela analytics_reports
+da Parte 2 não tem coluna de dono — o escopo por recurso NÃO entra no schema
+da Parte 2; (b) "modelo de permissões mais granular" é item da Parte 4. -->
 
 ## 1.3 Análise de Cenários
 

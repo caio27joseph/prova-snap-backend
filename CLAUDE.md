@@ -41,7 +41,9 @@ prioritized improvement instead.
 - Python 3.12+, FastAPI, SQLAlchemy 2.x (typed, `Mapped[]`), Alembic, Pydantic v2.
 - PostgreSQL via docker-compose for dev; tests may use SQLite or a Postgres fixture —
   decide and record in the log.
-- JWT: `python-jose`, HS256 mock of Keycloak token; expected structure documented in
+- JWT: `PyJWT` (deliberate revisit from `python-jose` — see log Decisão 10; the exam
+  cites python-jose only as an example, "ou outra!"), HS256 mock of Keycloak token;
+  expected structure documented in
   `docs/JWT_STRUCTURE.md` and mirroring real Keycloak claims
   (`sub`, `azp`, `resource_access.<client>.roles` or a flat `permissions` claim — decision to log).
 - `pytest` + `httpx` TestClient. Minimum 5 mandated tests, plus error-path tests.

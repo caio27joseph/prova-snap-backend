@@ -260,6 +260,21 @@ cada um com comentário no código e teste dedicado:
   ("Investigação Empresa X"). Interpretação deliberada de um requisito que o
   enunciado deixa aberto ("dados agregados, sem detalhe sensível").
 
+### Decisão 10: PyJWT em vez de python-jose — revisita deliberada após releitura do PDF (2026-08-24)
+- **Contexto:** releitura do PDF original para conferência final. O enunciado
+  cita python-jose apenas como exemplo ("biblioteca python-jose **ou
+  outra!**") — não é mandato. Critério que defini: se fosse citação com
+  alternativa explícita, escolheríamos a melhor lib e documentaríamos.
+- **Alternativas:** python-jose (citada, fixada inicialmente no CLAUDE.md) vs
+  PyJWT.
+- **Decisão tomada:** PyJWT.
+- **Por quê:** python-jose teve CVEs em 2024 (CVE-2024-33663, confusão de
+  algoritmo; CVE-2024-33664, DoS via JWE) e manutenção irregular; PyJWT é
+  ativamente mantida, com API menor e mais estrita — coerente com a postura
+  de parsing estrito da Decisão 2 e com o contexto forense. As CVEs não
+  afetam diretamente HS256 puro, mas entre duas libs equivalentes para o
+  nosso uso, a de melhor postura de segurança vence. CLAUDE.md atualizado.
+
 ## 5. Exemplos de interações com IA (opcional, até 3)
 
 <!-- colar trechos de prompts/respostas relevantes -->
