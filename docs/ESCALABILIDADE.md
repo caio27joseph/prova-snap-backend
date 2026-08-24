@@ -4,6 +4,46 @@ Avaliação honesta de como a solução escala, o que foi preparado desde já e 
 que fica deliberadamente para depois (com o caminho aberto). Este documento
 fundamenta parte das escolhas da Parte 4.
 
+## Por que um serviço único — e não microserviços
+
+A pergunta é legítima: a plataforma tem 3 aplicações, por que não 3 serviços?
+Decisão explícita: **monólito modular, um único serviço FastAPI.**
+
+1. **O enunciado fecha a porta.** A Parte 2 pede "um endpoint de busca
+   unificada **compartilhado** pelas 3 aplicações" — um `/api/v1/search`, com
+   comportamento variando por permissão. As "3 aplicações" (Analytics,
+   Investigator, Case Manager) são os *produtos* da plataforma — clients do
+   realm no Keycloak — que **consomem** este backend; não são três serviços a
+   construir. Três buscas separadas seria o oposto do requisito.
+2. **Contexto on-premises.** A plataforma roda na infraestrutura do cliente
+   (órgãos de controle). Cada serviço adicional é uma peça que *o cliente*
+   opera: deploy, upgrade, rede entre serviços, monitoramento. Microserviços
+   multiplicam custo operacional exatamente onde ele é mais caro — em dezenas
+   de instalações que não controlamos.
+3. **Problemas distribuídos sem ganho.** A busca agregada e a trilha de
+   auditoria em tabela única são triviais num serviço só; com serviços
+   separados viram fan-out por rede e consistência distribuída da trilha —
+   dor real, benefício nenhum no volume atual.
+4. **Pragmatismo avaliado.** Solução simples e efetiva é critério explícito
+   da rubrica; microserviços aqui seria abstração especulativa.
+
+**A parte importante: o monólito é modular com as costuras prontas.** Se um
+dia a extração se justificar, o custo é baixo por desenho, não por sorte:
+
+- O *strategy per app* isola cada regra de busca atrás de uma interface — um
+  strategy é um candidato natural a serviço.
+- A resposta agrupada por app já é scatter-gather — o agregador não muda de
+  contrato se uma fonte virar chamada de rede.
+- O caminho de shard funcional (abaixo) — um banco por domínio sem mudar o
+  contrato do endpoint — é literalmente o primeiro passo de uma extração.
+- Comunicação entre serviços (Investigator → Analytics) é tratada na Parte 1,
+  Cenário 2, via service accounts — em arquitetura escrita, onde o enunciado
+  a colocou, não em código.
+
+Critério objetivo para revisitar: extração se justifica quando um domínio
+precisar de **ciclo de deploy ou escala independente** (ex.: Investigator com
+carga 10× maior exigindo réplicas próprias) — não antes.
+
 ## Diagnóstico: onde a solução está hoje
 
 | Dimensão | Estado atual | Veredito |

@@ -275,6 +275,20 @@ cada um com comentário no código e teste dedicado:
   afetam diretamente HS256 puro, mas entre duas libs equivalentes para o
   nosso uso, a de melhor postura de segurança vence. CLAUDE.md atualizado.
 
+### Decisão 11: Monólito modular, não microserviços (2026-08-24)
+- **Contexto:** questionei se as 3 aplicações não deveriam ser 3 serviços.
+- **Decisão tomada:** um único serviço FastAPI (monólito modular), com as
+  costuras de extração prontas por desenho.
+- **Por quê:** o enunciado pede um endpoint de busca *compartilhado* (as 3
+  "aplicações" são clients/produtos que consomem o backend, não serviços a
+  construir); on-premises, cada serviço extra é custo operacional do cliente;
+  busca agregada + trilha de auditoria única virariam problemas distribuídos
+  sem ganho no volume atual. O strategy per app, a resposta agrupada
+  (scatter-gather) e o caminho de shard funcional já deixam a extração barata
+  se um domínio um dia precisar de deploy/escala independente — critério
+  objetivo registrado em `docs/ESCALABILIDADE.md` (seção "Por que um serviço
+  único").
+
 ## 5. Exemplos de interações com IA (opcional, até 3)
 
 <!-- colar trechos de prompts/respostas relevantes -->
