@@ -1,0 +1,26 @@
+# CodeRabbit — added ahead of adoption (BACKLOG T-14): reviews only activate
+# if/when this repo moves to a GitHub PR flow; harmless while merges stay
+# local. Requires installing the CodeRabbit GitHub App on the repository.
+language: "pt-BR"
+reviews:
+  profile: "chill"
+  high_level_summary: true
+  auto_review:
+    enabled: true
+  path_instructions:
+    - path: "app/**"
+      instructions: |
+        Project convention (CLAUDE.md): comments exist only for non-obvious
+        decisions — flag narration comments. Auth code follows strict-parsing
+        rules (single accepted token format, 401 before permission checks —
+        AI_ENGINEERING_LOG Decisões 2 and 9). Audit writes must never be able
+        to break the search response.
+    - path: "docs/**"
+      instructions: |
+        Client-facing docs are pt-BR, plain language. Technical claims should
+        cite files or logged decisions, not assert from memory.
+    - path: "alembic/**"
+      instructions: |
+        Migrations are additive; applied revisions are never edited. Indexes
+        on trafficked tables use CREATE INDEX CONCURRENTLY. Downgrades must
+        not destroy data (see PARTE3_INCIDENT section 4).

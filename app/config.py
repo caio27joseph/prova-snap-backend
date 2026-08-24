@@ -23,8 +23,9 @@ KNOWN_CLIENTS: dict[str, str] = {
     "case-manager-api": "case-manager",
 }
 
-# Resource guard: no search returns unbounded tables. Pagination is a deliberate
-# Parte 4 improvement; the schema is already cursor-ready (docs/ESCALABILIDADE.md).
+# Resource guard: no search returns unbounded tables. Also the hard ceiling for
+# the per-request `limit` since cursor pagination landed (T-12) — callers may
+# page smaller, never larger (docs/ESCALABILIDADE.md).
 SEARCH_RESULT_LIMIT = 50
 
 # Query bounds enforced by the request model: 1 char can't express intent and

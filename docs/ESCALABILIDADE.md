@@ -113,10 +113,13 @@ Dentro de um mesmo processo, a lib `uuid-utils` ainda garante monotonicidade
 em rajadas (contador nos bits sub-ms). Conclusão: adicionar instâncias não
 enfraquece o esquema de IDs — fortalece o argumento de tê-lo escolhido.
 
-## Paginação por cursor: preparada, não implementada
+## Paginação por cursor: preparada durante a prova, implementada pós-entrega
 
-O enunciado lista paginação explicitamente como melhoria futura (Parte 4), e o
-rubric premia não construir feature não pedida. O que fica pronto desde já:
+Durante a prova, a paginação ficou deliberadamente como melhoria futura (o
+enunciado a lista na Parte 4, e o rubric premia não construir feature não
+pedida) — apenas o terreno foi preparado. **Pós-entrega (ticket T-12), o
+cursor keyset foi implementado exatamente sobre essa preparação**, validando a
+aposta: nenhuma migração de schema foi necessária. O que estava pronto:
 
 - **IDs ordenáveis** (UUIDv7) — o cursor é o próprio `id` do último item.
 - **Envelope de resposta por app** que já comporta o campo futuro:
@@ -127,9 +130,10 @@ rubric premia não construir feature não pedida. O que fica pronto desde já:
   cada seção pagina independentemente (um `next_cursor` para investigator,
   outro para cases). **Analytics não pagina** — retorna agregados, não linhas.
 
-Custo residual de implementar depois: só o endpoint (aceitar `cursor` no body
-POST — outro motivo da escolha de POST — e devolver `next_cursor`). Zero
-migração de schema.
+O custo residual previsto — só o endpoint (aceitar `cursors` no body POST,
+outro motivo da escolha de POST, e devolver `next_cursor` real) — foi
+exatamente o custo pago na implementação do T-12: keyset `id > :cursor` com
+lookahead de `limit+1`, cursor por seção, zero migração de schema.
 
 ## Caminho de sharding (na ordem em que faria sentido)
 

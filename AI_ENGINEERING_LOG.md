@@ -458,3 +458,31 @@ As seções acima estão congeladas como a narrativa do exame (tag
   do checkout principal. Nenhum dano à `main`; lição: comandos compostos que
   mudam de diretório precisam de verificação de contexto antes de operações
   de histórico.
+
+### Decisão 15 (adicional): semântica do cursor na paginação (T-12)
+- Lookahead de `limit+1` em vez de `len == limit` — remove a página final
+  vazia ao custo de uma linha extra buscada. Cursor para app sem permissão é
+  silenciosamente ignorado (permissões decidem escopo; cursor só posiciona
+  dentro dele — validar seria transformar o cursor num probe de permissões),
+  enquanto cursor para "analytics" é 422 (agregado não pagina; erro de
+  contrato falha alto). O critério de aceitação "inserção antes do cursor"
+  foi redefinido com honestidade: UUIDv7 cunhado na inserção sempre ordena
+  depois do cursor, então o teste fabrica um id retrodatado e prova o
+  invariante real (nenhum pulo/repetição).
+
+### Decisão 16 (adicional): observabilidade com tracing no-op e telemetria guardada (T-13)
+- Métricas OTel via Prometheus reader; tracing deixado como no-op deliberado
+  (instrumentação pronta, zero custo/erro sem collector). O contador de
+  falhas de auditoria é incrementado DENTRO da guarda do audit e embrulhado
+  em try/except próprio — telemetria jamais pode quebrar a regra "audit não
+  quebra a busca". Stack Prometheus+Grafana sob profile do compose (fluxo do
+  avaliador intocado), dashboard com PromQL verificado contra tráfego real.
+  Limitação desta máquina registrada: UFW bloqueia container→host, então o
+  scrape local exige regra de firewall; o desenho embarcado
+  (host.docker.internal) é o padrão e foi provado num container descartável.
+
+### Nota (T-14): CodeRabbit adicionado, não adotado
+- `.coderabbit.yaml` versionado com instruções por path espelhando as
+  convenções do projeto; as reviews só ativam se o fluxo migrar para PRs no
+  GitHub (e exigem instalar o App). Decisão deliberada: adicionar sem mudar
+  o fluxo de merges locais que funcionou a prova inteira.

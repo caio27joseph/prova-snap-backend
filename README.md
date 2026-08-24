@@ -72,7 +72,7 @@ DATABASE_URL=postgresql+psycopg://prova:prova@localhost:5433/prova
 
 ## Qualidade
 
-A suíte automatizada tem **76 testes** — incluindo os 5 casos exigidos pela
+A suíte automatizada tem **88 testes** — incluindo os 5 casos exigidos pela
 prova e os caminhos de erro (token inválido/expirado, falta de permissão,
 consulta inválida, banco indisponível, falha de auditoria) — e roda contra um
 PostgreSQL real, aplicando as migrações de verdade. `make check` executa tudo.
