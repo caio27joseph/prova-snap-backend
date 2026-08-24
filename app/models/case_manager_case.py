@@ -15,6 +15,13 @@ class CaseManagerCase(Base):
         # (ownership rule), optionally narrowed by status.
         Index("ix_case_manager_cases_assigned_to", "assigned_to"),
         Index("ix_case_manager_cases_status", "status"),
+        # Trigram GIN serving the Case Manager strategy's ILIKE on title (T-11).
+        Index(
+            "ix_case_manager_cases_title_trgm",
+            "title",
+            postgresql_using="gin",
+            postgresql_ops={"title": "gin_trgm_ops"},
+        ),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid7)

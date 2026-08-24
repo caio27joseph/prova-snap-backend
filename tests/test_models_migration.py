@@ -1,16 +1,25 @@
 """Proves the Alembic migration delivered what T-03 promises: schema shape,
-constraints, and the deterministic seed the later search tests build on."""
+constraints, and the deterministic seed the later search tests build on.
+Extended by T-11 with the pg_trgm GIN indexes (existence + usability)."""
 
 import uuid
 
 import pytest
-from sqlalchemy import func, select
+from sqlalchemy import func, select, text
 from sqlalchemy.exc import IntegrityError
 
 from app.auth.mock_users import ANA, CARLOS, OUTRO
 from app.models import AnalyticsReport, CaseManagerCase, InvestigatorEntity, SearchAuditLog
+from app.services.search.text import LIKE_ESCAPE_CHAR, like_pattern
 
 SEARCHABLE_TYPES = {"pessoa", "empresa", "transacao", "documento"}
+
+# T-11: trigram GIN indexes serving the strategies' ILIKE, one per text column.
+TRIGRAM_INDEXES = {
+    "ix_analytics_reports_content_trgm": "analytics_reports",
+    "ix_investigator_entities_name_trgm": "investigator_entities",
+    "ix_case_manager_cases_title_trgm": "case_manager_cases",
+}
 
 
 def _count(db_session, model, *where):
@@ -79,3 +88,37 @@ def test_audit_rejects_unknown_status_value(db_session):
     )
     with pytest.raises(IntegrityError):
         db_session.flush()
+
+
+def test_trigram_gin_indexes_exist_after_migration(db_session):
+    rows = db_session.execute(
+        text("SELECT indexname, tablename, indexdef FROM pg_indexes WHERE indexname = ANY(:names)"),
+        {"names": list(TRIGRAM_INDEXES)},
+    ).all()
+    assert {row.indexname: row.tablename for row in rows} == TRIGRAM_INDEXES
+    for row in rows:
+        assert "USING gin" in row.indexdef
+        assert "gin_trgm_ops" in row.indexdef
+
+
+def test_analytics_ilike_can_use_trigram_index(db_session):
+    # With only 10 seed rows the planner will always prefer a seq scan, so a
+    # plain EXPLAIN proves nothing about the index. SET LOCAL enable_seqscan =
+    # off forces the planner to consider index paths; if the plan then uses the
+    # trgm index, the index is *usable* for this exact query shape — which is
+    # the honest claim at toy scale (planner *preference* only emerges with
+    # production volume). SET LOCAL dies with the fixture's rolled-back
+    # transaction, so nothing leaks into other tests.
+    db_session.execute(text("SET LOCAL enable_seqscan = off"))
+    # Same query shape the Analytics strategy emits: ILIKE with escaped pattern.
+    pattern = like_pattern("aurora")
+    plan = "\n".join(
+        line
+        for (line,) in db_session.execute(
+            text(
+                "EXPLAIN SELECT id FROM analytics_reports "
+                f"WHERE content ILIKE '{pattern}' ESCAPE '{LIKE_ESCAPE_CHAR}'"
+            )
+        )
+    )
+    assert "ix_analytics_reports_content_trgm" in plan
