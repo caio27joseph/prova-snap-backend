@@ -163,3 +163,38 @@ riscos aceitos.
       cópia). **Prazo: 2026-08-30.**
 
 **Depende de:** todos. **Estimativa:** 30min.
+
+---
+
+# Pós-entrega (após a tag `entrega-prova`)
+
+Execução do roadmap da própria Parte 4, na ordem lá justificada, mais a CI
+descrita. Trabalho claramente separado da submissão pela tag.
+
+## T-10 · CI com GitHub Actions — branch `melhoria-ci`
+`make lint` + suíte completa contra Postgres de serviço em todo push/PR.
+Atualizar a seção "deliberadamente fora" do DEVELOPMENT.md (a exclusão era
+da prova, não do projeto). **AC:** workflow verde no GitHub; docs coerentes.
+
+## T-11 · Busca full-text (`pg_trgm`) — branch `melhoria-fts`
+Melhoria nº 1 da Parte 4: extensão + índices GIN trigram em
+`analytics_reports.content`, `investigator_entities.name`,
+`case_manager_cases.title`, via `CREATE INDEX CONCURRENTLY` (padrão do
+PARTE3_INCIDENT, prevenção nº 2) em nova revisão Alembic. Zero mudança de
+contrato — o ILIKE existente passa a ser servido por índice. **AC:** migração
+aplica limpa (upgrade + downgrade); índices provados existentes; suíte verde.
+
+## T-12 · Paginação por cursor — branch `melhoria-paginacao`
+Melhoria nº 2: aceitar `cursor` por seção no body, devolver `next_cursor`
+real (id do último item). Analytics não pagina. **AC:** teste de travessia
+completa sem pular/repetir item sob inserção concorrente.
+
+## T-13 · OpenTelemetry + Grafana — branch `melhoria-otel`
+Melhoria nº 3: instrumentação FastAPI+SQLAlchemy, Prometheus + Grafana no
+compose (profile `observability`), 1 dashboard com os painéis do
+PARTE3_INCIDENT (p95/p99 por endpoint, CPU do banco, falhas de auditoria
+como métrica). **AC:** dashboard renderiza com tráfego real do smoke test.
+
+## T-14 · Fluxo de PRs + CodeRabbit — decisão futura
+Só faz sentido ao migrar merges locais para PRs no GitHub; reavaliar após
+T-10 consolidar a CI.
