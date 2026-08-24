@@ -423,3 +423,38 @@ tudo atendido — e um achado que ninguém com o contexto da sessão pegaria: o
 inventado pelo nosso próprio extrato (o PDF não especifica método). Correção
 registrada na Decisão 4; a lição — extratos viram fonte de verdade
 silenciosamente — fecha o ciclo do uso crítico de IA que esta prova avalia.
+
+---
+
+# Adendo pós-entrega
+
+As seções acima estão congeladas como a narrativa do exame (tag
+`entrega-prova`). Abaixo, registros **adicionais** do roadmap pós-entrega
+(tickets T-10+ do BACKLOG), mantidos no mesmo padrão de honestidade.
+
+### Decisão 13 (adicional): CI sem passo de criação do banco de teste (T-10)
+- O workflow do GitHub Actions não cria o `prova_test`: o agente leu o
+  conftest e citou as linhas provando que a suíte dropa e recria o banco a
+  cada sessão — um passo de `CREATE DATABASE` seria descartado imediatamente.
+  Decisão baseada em evidência do código, comentada no próprio workflow.
+
+### Decisão 14 (adicional): pg_trgm com padrão de produção modelado (T-11)
+- Índices GIN criados com `CREATE INDEX CONCURRENTLY` em `autocommit_block` +
+  `ANALYZE` (o padrão que o nosso PARTE3_INCIDENT estabeleceu como prevenção),
+  espelhados nos models com `alembic check` sem drift; downgrade remove só os
+  índices e preserva a extensão (anti-pattern de downgrade destrutivo, também
+  do PARTE3). Limitação registrada com honestidade: os testes provam que a
+  migração executa e que o índice é utilizável (`EXPLAIN` com
+  `enable_seqscan=off`), não que evita locks sob tráfego real — essa garantia
+  é semântica do Postgres, não dos nossos testes.
+
+### Caso 4 (erro de IA, adicional): merges executados no diretório errado
+- **O que aconteceu:** ao fechar a rodada T-10/T-11, a IA encadeou comandos
+  com `cd` acumulado e executou os `git merge` de dentro do worktree da
+  `melhoria-fts` — mergeando a branch de CI na branch de FTS em vez da `main`.
+- **Como foi pego:** verificação imediata pós-comando (`git log` nos dois
+  lugares) mostrou a `main` intacta e o merge indevido na branch.
+- **Correção:** `reset --hard` da branch ao commit correto e merges refeitos
+  do checkout principal. Nenhum dano à `main`; lição: comandos compostos que
+  mudam de diretório precisam de verificação de contexto antes de operações
+  de histórico.
