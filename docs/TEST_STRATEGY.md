@@ -40,8 +40,11 @@ qualquer forma, e o README documenta o passo único `docker compose up -d`.
   vez de usar `create_all`, que poderia divergir dela).
 - **Escopo de função:** cada teste roda dentro de uma transação com **rollback ao
   final** — isolamento total entre testes sem custo de recriar o schema.
-- **Dados de teste explícitos por teste** (factories/fixtures pequenas), não o
-  seed da migration — cada teste declara o que espera encontrar.
+- **Dados de teste explícitos por teste** (factories/fixtures pequenas) para
+  testes de *feature* — cada teste declara o que espera encontrar. Exceção
+  deliberada: os testes de **migração** (T-03) asseram contra o seed, porque o
+  seed é o próprio artefato sob teste; o seed é determinístico (UUIDs e datas
+  hardcoded), então essas asserções são estáveis.
 - **JWTs forjados por um helper** (`make_token(user_id, app, permissions, exp)`),
   assinados com o mesmo segredo HS256 de teste — cobre tokens válidos, expirados,
   malformados e com claims ausentes.

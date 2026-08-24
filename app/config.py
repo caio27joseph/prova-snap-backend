@@ -8,7 +8,9 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
     database_url: str = "postgresql+psycopg://prova:prova@localhost:5432/prova"
-    jwt_secret: str = "dev-secret-change-me"
+    # ≥32 bytes: RFC 7518 minimum key size for HS256 — PyJWT warns below it
+    # (flagged during T-04 review; dev-only value, real deployments override).
+    jwt_secret: str = "dev-secret-change-me-0123456789abcdef"
     jwt_algorithm: str = "HS256"
 
 
