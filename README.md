@@ -12,7 +12,7 @@ e toda busca fica registrada em uma **trilha de auditoria**.
 
 - **Docker** (com Docker Compose) — para o banco de dados PostgreSQL.
 - **[uv](https://docs.astral.sh/uv/)** — gerenciador do projeto Python
-  (instala o Python 3.12+ e as dependências sozinho).
+  (cuida sozinho de instalar um Python compatível — 3.12 ou superior — e as dependências).
 
 ## Como rodar
 
@@ -70,12 +70,9 @@ DATABASE_URL=postgresql+psycopg://prova:prova@localhost:5433/prova
 - [Estratégia de testes](docs/TEST_STRATEGY.md) · [Estratégia de commits](docs/COMMIT_STRATEGY.md)
 - [Requisitos extraídos do enunciado](docs/REQUIREMENTS.md)
 
-## Estado atual do desenvolvimento
+## Qualidade
 
-> Seção temporária — removida na entrega final.
-
-- [x] Infraestrutura: banco via Docker, projeto Python, endpoint `/health`
-- [x] Decisões de arquitetura documentadas (11 decisões no log de IA)
-- [ ] Parte 1 — resposta escrita (1.1 pronta; 1.2 e 1.3 pendentes)
-- [ ] Parte 2 — modelos, migração com seed, autenticação JWT, endpoint de busca, testes
-- [ ] Partes 3 e 4 — respostas escritas
+A suíte automatizada tem **71 testes** — incluindo os 5 casos exigidos pela
+prova e os caminhos de erro (token inválido/expirado, falta de permissão,
+consulta inválida, banco indisponível, falha de auditoria) — e roda contra um
+PostgreSQL real, aplicando as migrações de verdade. `make check` executa tudo.

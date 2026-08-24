@@ -121,7 +121,7 @@ Nomeados um a um, com a mitigação temporária e o porquê da aceitabilidade:
 - **Sem pipeline de CI completa.** Descrita, não implementada (o enunciado
   explicitamente aceita descrever). Risco de regressão mitigado pelo `make
   check` local (lint + suíte completa, gate de todo merge — `Makefile`) e por
-  uma suíte com mais de 60 testes que cobre os caminhos de erro, não só o happy path.
+  uma suíte de 71 testes que cobre os caminhos de erro, não só o happy path.
 - **Sem modelo de permissões mais granular.** Client roles
   (`resource_access.<client>.roles`, Decisão 2) bastam para o escopo atual; a
   camada de recurso (ownership — "viewer vê relatórios *do João*") está
@@ -137,7 +137,7 @@ Nomeados um a um, com a mitigação temporária e o porquê da aceitabilidade:
   causa (custo por requisição) o FTS remove.
 - **Cache Redis** — consistência é requisito forense e o ganho é ilegível
   antes de FTS + telemetria darem números.
-- **Mais testes automatizados** — a suíte atual (60+ testes) já cobre os 5 casos obrigatórios e
+- **Mais testes automatizados** — a suíte atual (71 testes) já cobre os 5 casos obrigatórios e
   a matriz de erros já dão confiança proporcional ao escopo; mais testes sem
   nova superfície é rendimento decrescente.
 - **Pipeline de CI** — valor real, mas replica o que o `make check` já garante

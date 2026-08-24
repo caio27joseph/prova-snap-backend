@@ -5,9 +5,12 @@ Mantido em tempo real durante o desenvolvimento (não reconstruído ao final).
 
 ## 1. Ferramentas utilizadas
 
-- **Claude Code** (Anthropic, modelo Fable 5) — extensão VSCode: leitura do enunciado,
-  estruturação do projeto, geração assistida de código e testes, discussão de trade-offs.
-<!-- adicionar outras ferramentas conforme forem usadas (ex.: Copilot, ChatGPT) -->
+- **Claude Code** (Anthropic, modelo Fable 5) — extensão VSCode. Única
+  ferramenta de IA utilizada, em três papéis distintos: sessão principal
+  (decisões, revisão, orquestração), agentes paralelos em git worktrees
+  (implementação dos blocos T-03/T-04 e T-05/T-06/T-07/T-08 em pares
+  simultâneos) e agente auditor independente sem o contexto da sessão
+  (verificação final contra o PDF).
 
 ## 2. Casos em que a IA ajudou (até 3)
 
@@ -17,7 +20,10 @@ Mantido em tempo real durante o desenvolvimento (não reconstruído ao final).
 - **Como a IA ajudou:** extraiu todos os requisitos do PDF para `docs/REQUIREMENTS.md`
   com checklist de Definition of Done, e criou as diretrizes de trabalho (`CLAUDE.md`).
 - **Resultado:** visão completa dos 5 blocos da prova e dos critérios de avaliação antes
-  de escrever qualquer código. <!-- validar/ajustar ao final -->
+  de escrever qualquer código. Validação ao final: a auditoria independente
+  (Exemplo 3 da seção 5) comparou o extrato com as 9 páginas do PDF e o
+  considerou fiel, com um único desvio encontrado e corrigido — a atribuição
+  do método HTTP (ver Decisão 4).
 
 ### Caso 2: Implementação paralela de dois blocos com agentes em worktrees (2026-08-24)
 - **Problema:** T-03 (models + migração + fundação de testes) e T-04 (dependency
@@ -375,266 +381,45 @@ cada um com comentário no código e teste dedicado:
   completa em `docs/PARTE4_TRADEOFFS.md`.
 
 ## 5. Exemplos de interações com IA (opcional, até 3)
-ok then, lets then plan and create all dev requirements for this project, like the user should x, the industry standard requirements
-Fechado — vou consolidar os "requisitos do desenvolvedor" no padrão de mercado: o guia de desenvolvimento com as regras obrigatórias, atalhos padronizados (Makefile), e o acesso pré-aprovado aos worktrees via settings. Para mexer no .claude/settings.json o procedimento correto é carregar a skill de configuração primeiro:
 
-update-config skill
-Bash Check existing .claude settings
-IN
-ls -la .claude/ 2>/dev/null; cat .claude/settings.json 2>/dev/null || echo "NO_SETTINGS_FILE"
+Três interações curtas que mostram o processo de trabalho — os transcritos
+completos vivem no histórico das sessões; aqui ficam os trechos que importam.
 
-OUT
-total 0
-drwxr-xr-x 1 cj cj  12 Aug 24 05:25 .
-drwxr-xr-x 1 cj cj 370 Aug 24 05:34 ..
-drwxr-xr-x 1 cj cj  68 Aug 24 05:35 skills
-NO_SETTINGS_FILE
-Write settings.json
-8 lines
-{
-  "permissions": {
-    "additionalDirectories": [
-      "../prova-snap-backend.wt"
-    ]
-  }
-}
-Bash Validate settings.json syntax
-IN
-jq -e '.permissions.additionalDirectories' .claude/settings.json
+### Exemplo 1: Exigindo fundamentação em documentação oficial (Decisão 1)
 
-OUT
-[
-  "../prova-snap-backend.wt"
-]
-Write Makefile
-25 lines
-# Dev shortcuts — the canonical requirements live in docs/DEVELOPMENT.md.
-.PHONY: up down dev test lint fmt check
+A IA apresentou as opções de realm com uma recomendação pronta. Em vez de
+aceitar, respondi:
 
-up:            ## start Postgres (dev + test DBs) and wait until healthy
-	docker compose up -d
-	@timeout 60 bash -c 'until docker compose ps postgres --format "{{.Health}}" | grep -q healthy; do sleep 2; done'
-	@echo "postgres healthy"
+> *"lets use the documentation to find the best approach for this scenario"*
 
-down:          ## stop Postgres (data volume is kept)
-	docker compose down
+A IA então buscou a documentação oficial do Keycloak e voltou com citações
+literais ("Realms are isolated from one another...", clients como "role
+namespace dedicated to the client") que fundamentaram a Opção A — e a
+resposta da Parte 1.1 cita essas fontes, não a opinião da ferramenta.
 
-dev: up        ## run the API with hot reload
-	uv run uvicorn app.main:app --reload
+### Exemplo 2: Reavaliação adversarial que derrubou uma decisão (Seção 3, Caso 1)
 
-test: up       ## run the test suite (real Postgres, see docs/TEST_STRATEGY.md)
-	uv run pytest
+Depois de aceitar a sugestão de dois formatos de claim no JWT, a releitura do
+log me incomodou e desafiei:
 
-lint:          ## static checks (ruff)
-	uv run ruff check .
+> *"do you think this is the best?"*
 
-fmt:           ## auto-format + autofix
-	uv run ruff format . && uv run ruff check --fix .
+Sob escrutínio, a própria IA apresentou o argumento que invalidava a opção
+que havia proposto (parsing liberal em código de autenticação é anti-pattern)
+— a decisão foi revertida para o formato único estrito. Lição registrada:
+análise de IA em decisão sensível precisa ser desafiada ativamente.
 
-check: lint test   ## everything that must be green before a merge
-Write DEVELOPMENT.md
-63 lines
-# Guia de Desenvolvimento — requisitos e regras
+### Exemplo 3: Auditoria independente sem o contexto da sessão
 
-O contrato de trabalho deste repositório: o que a máquina precisa ter, o que o
-desenvolvedor (humano ou IA) **deve** fazer em cada etapa, e o que fica
-deliberadamente de fora. Os documentos de estratégia detalham cada área:
-[commits/branches](COMMIT_STRATEGY.md) · [testes](TEST_STRATEGY.md) ·
-[worktrees](WORKTREES.md) · [requisitos da prova](REQUIREMENTS.md).
+Ao final do desenvolvimento, pedi verificação por um agente limpo:
 
-## Requisitos da máquina
+> *"use a agent to verify the requirements if matches the docs, i want to
+> verify without this session context"*
 
-| Ferramenta | Para quê | Verificação |
-|---|---|---|
-| Docker + Compose | PostgreSQL de dev e teste | `docker compose version` |
-| [uv](https://docs.astral.sh/uv/) | Python 3.12+, dependências, venv | `uv --version` |
-| git ≥ 2.5 | Fluxo de worktrees | `git --version` |
-
-Setup do zero: `make up && uv sync` — depois `make dev` e abrir
-<http://localhost:8000/health>. Porta 5432 ocupada? Ver seção no
-[README](../README.md).
-
-## Atalhos padronizados (`Makefile`)
-
-`make up` · `make dev` · `make test` · `make lint` · `make fmt` ·
-`make check` (= lint + test, o gate de merge).
-
-## O desenvolvedor DEVE
-
-1. **Trabalhar em branch por bloco**, criada via `scripts/wt.sh new <branch>`
-   (nomes na tabela do [COMMIT_STRATEGY](COMMIT_STRATEGY.md)). `main` recebe
-   apenas merges `--no-ff` de blocos com suíte verde; ajustes de uma linha
-   podem ir direto.
-2. **Antes de cada commit:** `make fmt` e `make lint` limpos; Conventional
-   Commit pequeno, em inglês, corpo explicando o porquê. Agentes de IA:
-   propor o commit e **aguardar aprovação explícita** (regra do CLAUDE.md).
-3. **Antes de cada merge:** `make check` verde dentro do worktree; merge
-   feito do checkout principal; branch preservada.
-4. **Registrar decisões em tempo real:** decisão de engenharia relevante →
-   entrada no `AI_ENGINEERING_LOG.md` **no mesmo commit** da mudança.
-   Sugestão de IA rejeitada ou errada → seção 3 do log, na hora.
-5. **Nunca commitar segredos.** `.env` é local e gitignorado;
-   `.env.example` documenta as variáveis; defaults de dev vivem em
-   `app/config.py`.
-6. **Gerenciar dependências só via `uv add`/`uv remove`** — `pyproject.toml`
-   e `uv.lock` mudam juntos, no mesmo commit, com o porquê da lib no corpo.
-7. **Migrations sempre aditivas via Alembic** (`alembic revision`); migration
-   já aplicada nunca é editada — cria-se outra.
-8. **Comentar apenas decisões não-óbvias** no código (exigência da prova);
-   identificadores e mensagens em inglês, docs entregáveis em pt-BR.
-9. **Testar caminhos de erro junto com a feature** — a matriz do
-   [TEST_STRATEGY](TEST_STRATEGY.md) é o alvo; teste novo entra no mesmo
-   bloco da funcionalidade que ele prova.
-10. **Manter os docs sincronizados:** mudança que altera como rodar/testar →
-    atualiza README/skills no mesmo bloco.
-
-## Deliberadamente fora (com justificativa)
-### 1
-prompt: continue with the plan and create all dev requirements for this project, like the user should x, the industry standard requirements
-response:
-Fechado — vou consolidar os "requisitos do desenvolvedor" no padrão de mercado: o guia de desenvolvimento com as regras obrigatórias, atalhos padronizados (Makefile), e o acesso pré-aprovado aos worktrees via settings. Para mexer no .claude/settings.json o procedimento correto é carregar a skill de configuração primeiro:
-
-update-config skill
-Bash Check existing .claude settings
-IN
-ls -la .claude/ 2>/dev/null; cat .claude/settings.json 2>/dev/null || echo "NO_SETTINGS_FILE"
-
-OUT
-total 0
-drwxr-xr-x 1 cj cj  12 Aug 24 05:25 .
-drwxr-xr-x 1 cj cj 370 Aug 24 05:34 ..
-drwxr-xr-x 1 cj cj  68 Aug 24 05:35 skills
-NO_SETTINGS_FILE
-Write settings.json
-8 lines
-{
-  "permissions": {
-    "additionalDirectories": [
-      "../prova-snap-backend.wt"
-    ]
-  }
-}
-Bash Validate settings.json syntax
-IN
-jq -e '.permissions.additionalDirectories' .claude/settings.json
-
-OUT
-[
-  "../prova-snap-backend.wt"
-]
-Write Makefile
-25 lines
-# Dev shortcuts — the canonical requirements live in docs/DEVELOPMENT.md.
-.PHONY: up down dev test lint fmt check
-
-up:            ## start Postgres (dev + test DBs) and wait until healthy
-	docker compose up -d
-	@timeout 60 bash -c 'until docker compose ps postgres --format "{{.Health}}" | grep -q healthy; do sleep 2; done'
-	@echo "postgres healthy"
-
-down:          ## stop Postgres (data volume is kept)
-	docker compose down
-
-dev: up        ## run the API with hot reload
-	uv run uvicorn app.main:app --reload
-
-test: up       ## run the test suite (real Postgres, see docs/TEST_STRATEGY.md)
-	uv run pytest
-
-lint:          ## static checks (ruff)
-	uv run ruff check .
-
-fmt:           ## auto-format + autofix
-	uv run ruff format . && uv run ruff check --fix .
-
-check: lint test   ## everything that must be green before a merge
-Write DEVELOPMENT.md
-63 lines
-# Guia de Desenvolvimento — requisitos e regras
-
-O contrato de trabalho deste repositório: o que a máquina precisa ter, o que o
-desenvolvedor (humano ou IA) **deve** fazer em cada etapa, e o que fica
-deliberadamente de fora. Os documentos de estratégia detalham cada área:
-[commits/branches](COMMIT_STRATEGY.md) · [testes](TEST_STRATEGY.md) ·
-[worktrees](WORKTREES.md) · [requisitos da prova](REQUIREMENTS.md).
-
-## Requisitos da máquina
-
-| Ferramenta | Para quê | Verificação |
-|---|---|---|
-| Docker + Compose | PostgreSQL de dev e teste | `docker compose version` |
-| [uv](https://docs.astral.sh/uv/) | Python 3.12+, dependências, venv | `uv --version` |
-| git ≥ 2.5 | Fluxo de worktrees | `git --version` |
-
-Setup do zero: `make up && uv sync` — depois `make dev` e abrir
-<http://localhost:8000/health>. Porta 5432 ocupada? Ver seção no
-[README](../README.md).
-
-## Atalhos padronizados (`Makefile`)
-
-`make up` · `make dev` · `make test` · `make lint` · `make fmt` ·
-`make check` (= lint + test, o gate de merge).
-
-## O desenvolvedor DEVE
-
-1. **Trabalhar em branch por bloco**, criada via `scripts/wt.sh new <branch>`
-   (nomes na tabela do [COMMIT_STRATEGY](COMMIT_STRATEGY.md)). `main` recebe
-   apenas merges `--no-ff` de blocos com suíte verde; ajustes de uma linha
-   podem ir direto.
-2. **Antes de cada commit:** `make fmt` e `make lint` limpos; Conventional
-   Commit pequeno, em inglês, corpo explicando o porquê. Agentes de IA:
-   propor o commit e **aguardar aprovação explícita** (regra do CLAUDE.md).
-3. **Antes de cada merge:** `make check` verde dentro do worktree; merge
-   feito do checkout principal; branch preservada.
-4. **Registrar decisões em tempo real:** decisão de engenharia relevante →
-   entrada no `AI_ENGINEERING_LOG.md` **no mesmo commit** da mudança.
-   Sugestão de IA rejeitada ou errada → seção 3 do log, na hora.
-5. **Nunca commitar segredos.** `.env` é local e gitignorado;
-   `.env.example` documenta as variáveis; defaults de dev vivem em
-   `app/config.py`.
-6. **Gerenciar dependências só via `uv add`/`uv remove`** — `pyproject.toml`
-   e `uv.lock` mudam juntos, no mesmo commit, com o porquê da lib no corpo.
-7. **Migrations sempre aditivas via Alembic** (`alembic revision`); migration
-   já aplicada nunca é editada — cria-se outra.
-8. **Comentar apenas decisões não-óbvias** no código (exigência da prova);
-   identificadores e mensagens em inglês, docs entregáveis em pt-BR.
-9. **Testar caminhos de erro junto com a feature** — a matriz do
-   [TEST_STRATEGY](TEST_STRATEGY.md) é o alvo; teste novo entra no mesmo
-   bloco da funcionalidade que ele prova.
-10. **Manter os docs sincronizados:** mudança que altera como rodar/testar →
-    atualiza README/skills no mesmo bloco.
-
-## Deliberadamente fora (com justificativa)
-
-- **pre-commit hooks** — o gate é manual (`make check`) + revisão; instalar
-  hooks adicionaria fricção ao avaliador sem ganho numa equipe de um.
-- **CI real** — descrita na Parte 4, como o enunciado pede.
-- **mypy/pyright no gate** — tipagem já vem de SQLAlchemy 2 `Mapped[]` +
-  Pydantic v2 em runtime; um type-checker entraria como melhoria, não como
-  requisito da prova.
-Bash Verify Makefile targets work
-IN
-make lint && make fmt 2>&1 | tail -2 && echo "---" && make up 2>&1 | tail -1 && git status --short
-
-OUT
-uv run ruff check .
-All checks passed!
-24 files left unchanged
-All checks passed!
----
-postgres healthy
-?? .claude/settings.json
-?? .claude/skills/worktree-finish/
-?? .claude/skills/worktree-new/
-?? Makefile
-?? docs/DEVELOPMENT.md
-?? docs/WORKTREES.md
-?? scripts/
-Tudo verificado — make lint limpo, make fmt sem mudanças, make up funcional. O pacote completo de requisitos de dev está pronto:
-
-O que foi criado neste bloco:
-
-docs/DEVELOPMENT.md — o contrato "o desenvolvedor DEVE": 10 regras no padrão de mercado (branch por bloco, fmt+lint antes de commit, make check antes de merge, decisões no log no mesmo commit, segredos nunca no repo, deps só via uv add, migrations aditivas, comentários só não-óbvios, testes de erro junto com a feature, docs sincronizados) + requisitos de máquina e a seção "deliberadamente fora" com justificativas (pre-commit, CI real, mypy).
-Makefile — atalhos padronizados: up (com wait-healthy), dev, test, lint, fmt, e check = o gate de merge.
-.claude/settings.json — permissions.additionalDirectories apontando para ../prova-snap-backend.wt: sessões neste repo ganham acesso pré-aprovado aos worktrees (o que discutimos — visibilidade central sem perder a âncora do projeto). JSON validado.
-Os arquivos de worktree do turno anterior (scripts/wt.sh, skills worktree-new/worktree-finish, docs/WORKTREES.md) — ainda pendentes, entram no mesmo pacote.
+O auditor (sem acesso ao contexto da conversa) releu as 9 páginas do PDF,
+executou a suíte (71 testes) e comparou entregável por entregável. Veredito:
+tudo atendido — e um achado que ninguém com o contexto da sessão pegaria: o
+"POST/GET" citado na Decisão 4 como permissão do enunciado tinha sido
+inventado pelo nosso próprio extrato (o PDF não especifica método). Correção
+registrada na Decisão 4; a lição — extratos viram fonte de verdade
+silenciosamente — fecha o ciclo do uso crítico de IA que esta prova avalia.
