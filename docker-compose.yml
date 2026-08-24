@@ -1,0 +1,27 @@
+# Dev/test PostgreSQL — the API itself runs locally via uvicorn (see README).
+# Single instance hosts both the dev DB (prova) and the test DB (prova_test):
+# one `docker compose up -d` is the only prerequisite for running AND testing.
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: prova
+      POSTGRES_PASSWORD: prova
+      POSTGRES_DB: prova
+    ports:
+      # Host port is overridable (.env: POSTGRES_PORT) for machines where 5432
+      # is taken by another Postgres; default stays the standard 5432.
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      # runs only on first init of an empty volume; conftest.py re-creates
+      # prova_test if missing, so a pre-existing volume is not a problem
+      - ./docker/init-test-db.sql:/docker-entrypoint-initdb.d/init-test-db.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U prova -d prova"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  pgdata:
