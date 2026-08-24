@@ -56,7 +56,10 @@ Setup do zero: `make up && uv sync` — depois `make dev` e abrir
 
 - **pre-commit hooks** — o gate é manual (`make check`) + revisão; instalar
   hooks adicionaria fricção ao avaliador sem ganho numa equipe de um.
-- **CI real** — descrita na Parte 4, como o enunciado pede.
+- ~~**CI real**~~ — durante a prova ficou apenas descrita na Parte 4, como o
+  enunciado pede; pós-entrega (T-10) o workflow prometido foi implementado em
+  `.github/workflows/ci.yml`: o mesmo gate do `make check` (lint + suíte
+  contra Postgres de serviço) em todo push na `main` e pull request.
 - **mypy/pyright no gate** — tipagem já vem de SQLAlchemy 2 `Mapped[]` +
   Pydantic v2 em runtime; um type-checker entraria como melhoria, não como
   requisito da prova.

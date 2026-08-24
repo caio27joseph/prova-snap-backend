@@ -1,0 +1,59 @@
+# T-10: the same `make check` gate (lint + full suite against real Postgres),
+# on every push to main and every pull request. Kept to a single minimal job —
+# no matrix, no coverage upload — mirroring what a developer runs locally.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        # Same image/credentials as docker-compose.yml, so CI and dev run the
+        # exact same database.
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: prova
+          POSTGRES_PASSWORD: prova
+          POSTGRES_DB: prova
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      # --frozen: install exactly what uv.lock pins and fail if pyproject.toml
+      # drifted from the lockfile, instead of silently re-resolving in CI.
+      - name: Install dependencies
+        run: uv sync --frozen
+
+      - name: Format check
+        run: uv run ruff format --check .
+
+      - name: Lint
+        run: uv run ruff check .
+
+      # No `CREATE DATABASE prova_test` step needed: tests/conftest.py drops
+      # and recreates the test database itself every session, using the dev
+      # database `prova` (created above via POSTGRES_DB) as the maintenance
+      # connection. docker/init-test-db.sql is a compose-only convenience.
+      - name: Test
+        run: uv run pytest -q
+        env:
+          # Explicit URL on the default port 5432: dev machines may override
+          # the port via a gitignored .env, which does not exist in CI.
+          DATABASE_URL: postgresql+psycopg://prova:prova@localhost:5432/prova

@@ -76,3 +76,5 @@ A suíte automatizada tem **71 testes** — incluindo os 5 casos exigidos pela
 prova e os caminhos de erro (token inválido/expirado, falta de permissão,
 consulta inválida, banco indisponível, falha de auditoria) — e roda contra um
 PostgreSQL real, aplicando as migrações de verdade. `make check` executa tudo.
+A cada push, uma esteira automática no GitHub (CI) repete essa mesma
+verificação — o projeto só avança se todos os testes continuarem passando.
