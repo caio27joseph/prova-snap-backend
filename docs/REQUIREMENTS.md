@@ -196,5 +196,5 @@ prova-snap-backend/
 - [x] README a non-technical client can follow — run path verified by execution (independent audit)
 - [x] Error handling beyond the happy path — 401 taxonomy, 403, 422 bounds, 503 DB-down, audit-failure resilience (`tests/test_error_paths.py`)
 - [x] Non-obvious decisions commented in code — verified across `app/` (independent audit)
-- [ ] Private repo + collaborator `guilherme.rabelo@snapforensics.com` added — **in progress (Caio)**
-- [ ] Email sent: "Prova Técnica – Caio Joseph A. Silveira" — **pending (Caio)**
+- [x] Private repo + collaborator `guilherme.rabelo@snapforensics.com` added — 2026-08-24
+- [x] Email sent: "Prova Técnica – Caio Joseph A. Silveira" — 2026-08-24
