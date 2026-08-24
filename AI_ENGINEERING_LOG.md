@@ -189,11 +189,19 @@ Formato:
   (`results.analytics / .investigator / .case_manager`), porque cada app
   retorna um shape deliberadamente diferente (agregado / completo / metadados)
   e um envelope único achatado seria perda de informação.
-- **Método HTTP:** POST com body JSON (o enunciado permite POST/GET; a IA
-  recomendou GET pela semântica de leitura). Escolhi POST para deixar o
-  contrato aberto a busca rica (filtros estruturados no body) sem quebra
-  futura, com o bônus de não expor o termo pesquisado em query string de logs
-  de proxy — relevante numa plataforma forense.
+- **Método HTTP:** POST com body JSON (a IA recomendou GET pela semântica de
+  leitura). Escolhi POST para deixar o contrato aberto a busca rica (filtros
+  estruturados no body) sem quebra futura, com o bônus de não expor o termo
+  pesquisado em query string de logs de proxy — relevante numa plataforma
+  forense. *Correção de atribuição (2026-08-24, achada por auditoria
+  independente):* esta decisão dizia originalmente "o enunciado permite
+  POST/GET" — mas o PDF **não especifica método algum**; o "POST/GET" tinha
+  sido inventado pelo nosso extrato (`docs/REQUIREMENTS.md`) e citado aqui
+  como se fosse o enunciado. A escolha do POST permanece válida pelos motivos
+  acima; o que estava errado era atribuí-la a uma permissão do enunciado. O
+  erro só apareceu quando um agente auditor sem o contexto da sessão comparou
+  o extrato com o PDF original — evidência de que extratos viram fonte de
+  verdade silenciosamente e precisam de auditoria independente.
 - **Índices:** B-tree apenas nas colunas de filtro
   (`investigator_entities.type`, `case_manager_cases.assigned_to`/`status`,
   `search_audit_log(user_id, timestamp)`). Sem índice trigram nos campos de

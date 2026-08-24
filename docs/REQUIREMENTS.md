@@ -76,7 +76,7 @@ Answer:
 
 ## PARTE 2 — Multi-Application Search Endpoint (code)
 
-One shared endpoint `POST/GET /api/v1/search` used by all 3 apps, behaving differently by **origin app** and **user permissions**:
+One shared endpoint `/api/v1/search` used by all 3 apps, behaving differently by **origin app** and **user permissions** (the PDF does **not** specify the HTTP method — our POST choice is recorded in AI log Decisão 4):
 
 - Know which application the request came from.
 - Validate the user has permission for that specific application.
