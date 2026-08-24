@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session
 
 from app.auth.context import AuthContext
 from app.models import SearchAuditLog
+from app.observability import audit_write_failures
 
 logger = logging.getLogger(__name__)
 
@@ -65,6 +66,13 @@ def _write(session: Session, rows: list[SearchAuditLog]) -> None:
         session.commit()
     except Exception:
         logger.exception("audit write failed — search response is preserved (CLAUDE.md rule)")
+        try:
+            # Metric, not just log line (PARTE3_INCIDENT §7): a silent audit
+            # gap in a forensic platform must be alertable. Wrapped because
+            # the guard may never raise — not even for its own telemetry.
+            audit_write_failures.add(1)
+        except Exception:
+            logger.exception("audit failure metric increment failed")
         try:
             session.rollback()
         except Exception:

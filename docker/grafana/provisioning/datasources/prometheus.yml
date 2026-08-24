@@ -1,0 +1,12 @@
+# Auto-provisioned datasource: Grafana talks to Prometheus over the compose
+# network (service name), regardless of which host port PROMETHEUS_PORT maps.
+# The fixed uid is what the dashboard JSON panels reference.
+apiVersion: 1
+
+datasources:
+  - name: Prometheus
+    uid: prometheus
+    type: prometheus
+    access: proxy
+    url: http://prometheus:9090
+    isDefault: true

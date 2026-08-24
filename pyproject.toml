@@ -14,6 +14,14 @@ dependencies = [
     "pyjwt>=2.9",
     # uuid-utils: UUIDv7 generation; stdlib uuid7 only exists on Python 3.14+ and we target 3.12+
     "uuid-utils>=0.9",
+    # Observability (T-13): OTel SDK + auto-instrumentation for FastAPI (HTTP
+    # latency histogram) and SQLAlchemy (DB/pool metrics); the Prometheus
+    # exporter + client expose it all on /metrics — no agent/collector needed.
+    "opentelemetry-sdk>=1.44.0",
+    "opentelemetry-exporter-prometheus>=0.65b0",
+    "opentelemetry-instrumentation-fastapi>=0.65b0",
+    "opentelemetry-instrumentation-sqlalchemy>=0.65b0",
+    "prometheus-client>=0.26.0",
 ]
 
 [dependency-groups]

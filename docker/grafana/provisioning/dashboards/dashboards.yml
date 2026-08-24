@@ -1,0 +1,9 @@
+# Auto-loads every dashboard JSON mounted at /var/lib/grafana/dashboards
+# (see the grafana service volumes in docker-compose.yml).
+apiVersion: 1
+
+providers:
+  - name: search-api
+    type: file
+    options:
+      path: /var/lib/grafana/dashboards

@@ -1,0 +1,18 @@
+# Prometheus scrape config (T-13). The API is NOT a compose service — it runs
+# on the HOST via uvicorn — so the target is the host as seen from inside the
+# container: host.docker.internal, mapped by the extra_hosts host-gateway entry
+# in docker-compose.yml. Two consequences:
+#   1. uvicorn must listen on an interface the container can reach, i.e.
+#      `uvicorn app.main:app --host 0.0.0.0` (127.0.0.1 is invisible to it);
+#   2. if the API runs on a port other than 8000, edit the target below —
+#      Prometheus does not expand environment variables in this file.
+global:
+  # Dev-friendly interval: the Grafana dashboard reacts to smoke-test traffic
+  # within seconds instead of the 1m production default.
+  scrape_interval: 5s
+
+scrape_configs:
+  - job_name: search-api
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["host.docker.internal:8000"]

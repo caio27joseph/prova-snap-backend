@@ -72,9 +72,27 @@ DATABASE_URL=postgresql+psycopg://prova:prova@localhost:5433/prova
 
 ## Qualidade
 
-A suíte automatizada tem **73 testes** — incluindo os 5 casos exigidos pela
+A suíte automatizada tem **76 testes** — incluindo os 5 casos exigidos pela
 prova e os caminhos de erro (token inválido/expirado, falta de permissão,
 consulta inválida, banco indisponível, falha de auditoria) — e roda contra um
 PostgreSQL real, aplicando as migrações de verdade. `make check` executa tudo.
 A cada push, uma esteira automática no GitHub (CI) repete essa mesma
 verificação — o projeto só avança se todos os testes continuarem passando.
+
+### Monitoramento (opcional)
+
+A API também expõe medições de saúde em tempo real — quanto tempo cada busca
+demora, quantas requisições chegam e se alguma gravação da trilha de auditoria
+falhou. Para visualizar isso em painéis gráficos, suba o modo de monitoramento
+(a API precisa estar rodando com `--host 0.0.0.0`):
+
+```bash
+uv run uvicorn app.main:app --host 0.0.0.0   # a API, visível para os painéis
+docker compose --profile observability up -d  # sobe Prometheus + Grafana
+```
+
+Depois abra <http://localhost:3000> (usuário `admin`, senha `admin`): o painel
+"Search API — Observability" já aparece pronto, sem nenhuma configuração
+manual. Esse modo é totalmente opcional — o `docker compose up -d` normal
+continua subindo só o banco. Se as portas 3000 ou 9090 estiverem ocupadas na
+sua máquina, defina `GRAFANA_PORT` e/ou `PROMETHEUS_PORT` no `.env`.

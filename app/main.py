@@ -5,6 +5,8 @@ from fastapi.responses import JSONResponse
 from sqlalchemy.exc import OperationalError
 
 from app.api import health, search
+from app.db import engine
+from app.observability import setup_observability
 
 logger = logging.getLogger(__name__)
 
@@ -15,6 +17,10 @@ app = FastAPI(
 
 app.include_router(health.router)
 app.include_router(search.router)
+
+# After the routers: instruments HTTP + SQLAlchemy metrics and mounts /metrics
+# (T-13 — see app/observability.py for the choices made here).
+setup_observability(app, engine)
 
 
 @app.exception_handler(OperationalError)

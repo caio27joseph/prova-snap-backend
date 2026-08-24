@@ -23,5 +23,38 @@ services:
       timeout: 3s
       retries: 10
 
+  # --- Observability stack (T-13, Parte 4 melhoria nº 3) ---------------------
+  # Both services sit behind the `observability` profile so the evaluator flow
+  # is untouched: a plain `docker compose up -d` still starts ONLY postgres.
+  # Opt in with: docker compose --profile observability up -d
+  prometheus:
+    image: prom/prometheus:v3.5.0
+    profiles: [observability]
+    ports:
+      # Same override pattern as POSTGRES_PORT: set PROMETHEUS_PORT in .env
+      # when 9090 is taken on this machine.
+      - "${PROMETHEUS_PORT:-9090}:9090"
+    volumes:
+      - ./docker/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    # The API runs on the HOST via uvicorn (there is no app container);
+    # host-gateway lets the container scrape it at host.docker.internal —
+    # see docker/prometheus.yml for the target and its caveats.
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  grafana:
+    image: grafana/grafana:12.1.0
+    profiles: [observability]
+    ports:
+      - "${GRAFANA_PORT:-3000}:3000"
+    volumes:
+      # Fully provisioned (datasource + dashboard baked in): opening
+      # localhost:3000 (admin/admin) already shows the search-api dashboard,
+      # no manual clicking. Dashboards are read from docker/grafana/dashboards.
+      - ./docker/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./docker/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    depends_on:
+      - prometheus
+
 volumes:
   pgdata:
