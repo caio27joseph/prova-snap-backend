@@ -83,7 +83,7 @@ não-óbvio cita fonte ou decisão do log. **Estimativa:** 1h15.
 
 ---
 
-## T-05 · Parte 2: endpoint de busca — branch `parte2-search`
+## T-05 · Parte 2: endpoint de busca — ✅ CONCLUÍDO (branch `parte2-search`)
 
 **Objetivo:** `POST /api/v1/search` completo: strategies por app, agregação,
 auditoria, response models.
@@ -120,7 +120,7 @@ auditoria, response models.
 
 ---
 
-## T-07 · Parte 3: incidente em produção — branch `parte3-incident`
+## T-07 · Parte 3: incidente em produção — ✅ CONCLUÍDO (branch `parte3-incident`)
 
 **Objetivo:** `docs/PARTE3_INCIDENT.md` respondendo os 7 pontos do enunciado.
 

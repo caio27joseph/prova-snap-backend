@@ -91,6 +91,25 @@ Formato:
   com why-comment em `tests/conftest.py` para o próximo leitor não repetir o
   ciclo.
 
+### Caso 3: Teste gerado pela IA asseriu o comportamento que a regra proíbe (2026-08-24)
+- **O que foi sugerido:** no bloco T-05, a primeira versão do teste obrigatório
+  nº 3 (agregação multi-app) esperava `total_matched == 2` para o termo
+  "aurora" na seção do Analytics.
+- **Por que era problemático:** o segundo "Aurora" do seed existe apenas no
+  **título** de um relatório — e a regra do enunciado diz que o Analytics
+  busca **somente no conteúdo**. O código implementava a regra corretamente;
+  era o teste que assumia o comportamento proibido. Um teste errado que
+  "corrige" código certo é o modo de falha mais perigoso de teste gerado por
+  IA: a suíte vermelha empurra o desenvolvedor a quebrar a regra para
+  "consertar".
+- **Como foi identificado:** a falha do teste contra o código correto forçou a
+  releitura da regra no enunciado; a expectativa foi corrigida para 1, com
+  comentário no teste explicando o porquê do valor.
+- **O que foi feito em vez disso:** expectativa corrigida e regra reforçada —
+  o mesmo bloco ganhou o teste de vazamento (a seção analytics não contém
+  título/conteúdo), tornando a regra "content-only, agregado-only" guardada
+  dos dois lados.
+
 ## 4. Decisões de Engenharia (mínimo 2)
 
 <!-- Formato:
