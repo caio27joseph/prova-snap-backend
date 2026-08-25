@@ -432,6 +432,21 @@ As seções acima estão congeladas como a narrativa do exame (tag
 `entrega-prova`). Abaixo, registros **adicionais** do roadmap pós-entrega
 (tickets T-10+ do BACKLOG), mantidos no mesmo padrão de honestidade.
 
+## Ferramentas adicionais (pós-entrega)
+
+Durante a janela da prova, apenas o Claude Code foi usado — por isso a seção 1
+lista só ele. No pós-entrega entraram:
+
+- **CodeRabbit** (IA de revisão de código) — *configurado, não em uso*:
+  `.coderabbit.yaml` versionado com as convenções do projeto; só ativa se o
+  fluxo migrar para PRs no GitHub (ver Nota T-14).
+- **act** (não-IA) — execução local de workflows do GitHub Actions, usado para
+  validar o pipeline do T-10 sem depender de push (instalado via binário do
+  release oficial após o mirror da distro falhar com 404).
+- **Prometheus + Grafana** (não-IA) — stack de observabilidade do T-13, sob
+  profile opcional do compose; ferramentas de operação, não de desenvolvimento
+  assistido.
+
 ### Decisão 13 (adicional): CI sem passo de criação do banco de teste (T-10)
 - O workflow do GitHub Actions não cria o `prova_test`: o agente leu o
   conftest e citou as linhas provando que a suíte dropa e recria o banco a
